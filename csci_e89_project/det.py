@@ -194,23 +194,31 @@ class DetDataset(utils.Dataset):
         # If not an object in our dataset image, delegate to parent class.
         image_info = self.image_info[image_id]
         if image_info["source"] not in self.class_names:
-            print("warning: source {} not part of our classes, delegating to parent.".format(image_info["source"]))
+            #print("warning: source {} not part of our classes, delegating to parent.".format(image_info["source"]))
             return super(self.__class__, self).load_mask(image_id)
 
         # Convert polygons to a bitmap mask of shape
         # [height, width, instance_count]
+        # polygons, rect, ellipse
         info = self.image_info[image_id]
-        mask = np.zeros([info["height"], info["width"], len(info["polygons"])],
+        #############!!!!!TODO: Add type
+        mask = np.zeros([info["height"], info["width"], len(info.get("polygons",[]))+len(info.get("rect",[])) + len(info.get("ecllipse",[]))],
                         dtype=np.uint8)
+        #print('mask.dimensions:%s'%(', '.join(str(i) for i in mask.shape)))
+
+        #mask = np.zeros([info["height"], info["width"], len(info["polygons"])], dtype=np.uint8)
         class_ids = []
-        for i, p in enumerate(info["polygons"]):
+        for i, p in enumerate(zip(info.get("polygons",[]),info.get('rect',[]),info.get('ecllipse',[]))):
             # Get indexes of pixels inside the polygon and set them to 1
             try:
-                rr, cc = skimage.draw.polygon(p['all_points_y'], p['all_points_x'])
+                rr, cc = self.get_coordinates(p)
                 mask[rr, cc, i] = 1
                 class_id = self.map_name_to_id[info['r_object_name'][i]]
                 class_ids.append(class_id)
+                print("normal!!!!!!!!!!!!!!!")
+                print(image_info)
             except:
+                print("bad!!!!!!!!!!!!!!!")
                 print(image_info)
                 raise
 
@@ -218,6 +226,26 @@ class DetDataset(utils.Dataset):
         # one class ID only, we return an array of 1s
         class_ids = np.array(class_ids, dtype=np.int32)
         return mask.astype(np.bool), class_ids
+
+    def get_coordinates(self, p):
+        '''
+        get coordinates of shape from file,
+        :param p: shapre from json
+        :return: rr, cc
+        Returns
+        -------
+        rr, cc : ndarray of int
+            Pixel coordinates of ellipse.
+            May be used to directly index into an array, e.g.
+            ``img[rr, cc] = 1``.
+        '''
+        if 'all_points_y' in p and 'all_points_x' in p:
+            rr, cc = skimage.draw.polygon(p['all_points_y'], p['all_points_x'])
+        if 'x' in p and 'width' in p:
+            rr, cc = skimage.draw.rectangle((p['x'], p['y']), (p['x'] + p['width'], p['y'] + p['height']))
+        if 'cx' in p and 'cy' in p and 'rx' in p and 'ry' in p:
+            rr, cc = skimage.draw.ellipse(p['cx'], p['cy'], p['rx'], p['ry'])
+        return rr, cc
 
     def image_reference(self, image_id):
         """Return the path of the image."""
@@ -336,7 +364,7 @@ def annotation_stats(annotations):
             uniq_class_names[object_name] += 1
     return uniq_class_names
 
-
+#TODO:????????
 if __name__ == "__main__":
     config = DetConfig('wolf', ['wolf'])
     dataset_train, dataset_val = create_datasets('./images/imgnet_n02114100/train', config)

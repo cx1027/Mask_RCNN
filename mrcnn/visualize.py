@@ -130,6 +130,7 @@ def display_instances(image, boxes, masks, class_ids, class_names,
             continue
         y1, x1, y2, x2 = boxes[i]
         if show_bbox:
+            #patches.Rectangle(矩形左下角, 长, 宽)
             p = patches.Rectangle((x1, y1), x2 - x1, y2 - y1, linewidth=2,
                                 alpha=0.7, linestyle="dashed",
                                 edgecolor=color, facecolor='none')
