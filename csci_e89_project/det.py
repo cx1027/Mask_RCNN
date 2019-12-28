@@ -211,7 +211,7 @@ class DetDataset(utils.Dataset):
         for i, p in enumerate(info["polygons"]): #zip(info.get("polygons",[]),info.get('rect',[]),info.get('ecllipse',[]))):
             # Get indexes of pixels inside the polygon and set them to 1
             try:
-                rr, cc = skimage.draw.polygon(p['all_points_y'], p['all_points_x'])
+                rr, cc = self.get_coordinates(p)
                 mask[rr, cc, i] = 1
                 class_id = self.map_name_to_id[info['r_object_name'][i]]
                 class_ids.append(class_id)
@@ -239,12 +239,14 @@ class DetDataset(utils.Dataset):
             May be used to directly index into an array, e.g.
             ``img[rr, cc] = 1``.
         '''
-        if 'all_points_y' in p and 'all_points_x' in p:
+        if p['name'] == 'polygon':
             rr, cc = skimage.draw.polygon(p['all_points_y'], p['all_points_x'])
-        if 'x' in p and 'width' in p:
+        elif p['name'] == 'rect':
             rr, cc = skimage.draw.rectangle((p['x'], p['y']), (p['x'] + p['width'], p['y'] + p['height']))
-        if 'cx' in p and 'cy' in p and 'rx' in p and 'ry' in p:
+        elif p['name'] == 'ellipse':
             rr, cc = skimage.draw.ellipse(p['cx'], p['cy'], p['rx'], p['ry'])
+        else:
+            print('##ERROR: shape is not polygon,rect or ellipse.')
         return rr, cc
 
     def image_reference(self, image_id):
