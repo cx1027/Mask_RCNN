@@ -36,7 +36,7 @@ ROOT_IMAGE_DIR = os.path.abspath("images/")
 
 # Path to the dataset (note this is a shared images directory)
 # dataset_path = os.path.join(ROOT_IMAGE_DIR, "level1")
-dataset_path = os.path.join(ROOT_IMAGE_DIR, "level1")
+dataset_path = os.path.join(ROOT_IMAGE_DIR, "level1-debug")
 
 models_dir = os.path.join(ROOT_DIR, "csci_e89_project/models/")
 
