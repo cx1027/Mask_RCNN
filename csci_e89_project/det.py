@@ -202,13 +202,13 @@ class DetDataset(utils.Dataset):
         # polygons, rect, ellipse
         info = self.image_info[image_id]
         #############!!!!!TODO: Add type
-        mask = np.zeros([info["height"], info["width"], len(info.get("polygons",[]))+len(info.get("rect",[])) + len(info.get("ecllipse",[]))],
+        mask = np.zeros([info["height"], info["width"], len(info["polygons"])],
                         dtype=np.uint8)
-        print('mask.dimensions:%s'%(', '.join(str(i) for i in mask.shape)))
+        print('mask.dimensions:%s, %s'%(info['id'], ', '.join(str(i) for i in mask.shape)))
 
         #mask = np.zeros([info["height"], info["width"], len(info["polygons"])], dtype=np.uint8)
         class_ids = []
-        for i, p in enumerate(info["polygons"]): #zip(info.get("polygons",[]),info.get('rect',[]),info.get('ecllipse',[]))):
+        for i, p in enumerate(info["polygons"]):
             # Get indexes of pixels inside the polygon and set them to 1
             try:
                 rr, cc = self.get_coordinates(p)
@@ -216,7 +216,7 @@ class DetDataset(utils.Dataset):
                 class_id = self.map_name_to_id[info['r_object_name'][i]]
                 class_ids.append(class_id)
                 print("normal!!!!!!!!!!!!!!!")
-                print(image_info)
+                # print(image_info)
             except:
                 print("bad!!!!!!!!!!!!!!!")
                 print(image_info)
