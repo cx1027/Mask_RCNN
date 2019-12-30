@@ -13,6 +13,12 @@ ROOT_DIR = os.path.abspath("../../")
 sys.path.append(ROOT_DIR)  # To find local version of the library
 from mrcnn.config import Config
 from mrcnn import utils
+import datetime
+import logging
+
+logging.basicConfig(filename='./log/log_maskRCnn_%s.log' % (datetime.datetime.today())
+                    , format='%(asctime)s [%(levelname)-5.5s] %(message)s'
+                    , level=logging.DEBUG)
 
 
 ############################################################
@@ -90,7 +96,7 @@ class DetDataset(utils.Dataset):
             # Skip over background if it appears in the class name list
             index = i + 1
             if name != 'BG':
-                print('Adding class {:3}:{}'.format(index, name))
+                logging.debug('Adding class {:3}:{}'.format(index, name))
                 self.add_class(self.dataset_name, index, name)
                 self.map_name_to_id[name] = index
 
@@ -135,8 +141,8 @@ class DetDataset(utils.Dataset):
         # Train or validation dataset?
         assert subset in ["train", "val"]
 
-        print(dataset_dir)
-        print(subset)
+        logging.debug(dataset_dir)
+        logging.debug(subset)
 
         dataset_dir = os.path.join(dataset_dir, subset)
 
@@ -159,7 +165,7 @@ class DetDataset(utils.Dataset):
             # Skip over background if it occurs in the
             index = i + 1
             if name != 'BG':
-                print('Adding class {:3}:{}'.format(index, name))
+                logging.debug('Adding class {:3}:{}'.format(index, name))
                 self.add_class('wolf', index, name)
 
         # Add images
@@ -194,7 +200,7 @@ class DetDataset(utils.Dataset):
         # If not an object in our dataset image, delegate to parent class.
         image_info = self.image_info[image_id]
         if image_info["source"] not in self.class_names:
-            #print("warning: source {} not part of our classes, delegating to parent.".format(image_info["source"]))
+            #logging.debug("warning: source {} not part of our classes, delegating to parent.".format(image_info["source"]))
             return super(self.__class__, self).load_mask(image_id)
 
         # Convert polygons to a bitmap mask of shape
@@ -204,7 +210,7 @@ class DetDataset(utils.Dataset):
         #############!!!!!TODO: Add type
         mask = np.zeros([info["height"], info["width"], len(info["polygons"])],
                         dtype=np.uint8)
-        print('mask.dimensions:%s, %s'%(info['id'], ', '.join(str(i) for i in mask.shape)))
+        logging.debug('mask.dimensions:%s, %s'%(info['id'], ', '.join(str(i) for i in mask.shape)))
 
         #mask = np.zeros([info["height"], info["width"], len(info["polygons"])], dtype=np.uint8)
         class_ids = []
@@ -215,11 +221,11 @@ class DetDataset(utils.Dataset):
                 mask[rr, cc, i] = 1
                 class_id = self.map_name_to_id[info['r_object_name'][i]]
                 class_ids.append(class_id)
-                print("normal!!!!!!!!!!!!!!!")
-                # print(image_info)
+                logging.debug("normal!!!!!!!!!!!!!!!")
+                # logging.debug(image_info)
             except:
-                print("bad!!!!!!!!!!!!!!!")
-                print(image_info)
+                logging.debug("bad!!!!!!!!!!!!!!!")
+                logging.debug(image_info)
                 raise
 
         # Return mask, and array of class IDs of each instance. Since we have
@@ -246,7 +252,7 @@ class DetDataset(utils.Dataset):
         elif p['name'] == 'ellipse':
             rr, cc = skimage.draw.ellipse(p['cx'], p['cy'], p['rx'], p['ry'])
         else:
-            print('##ERROR: shape is not polygon,rect or ellipse.')
+            logging.debug('##ERROR: shape is not polygon,rect or ellipse.')
         return rr, cc
 
     def image_reference(self, image_id):
@@ -255,7 +261,7 @@ class DetDataset(utils.Dataset):
         if info["source"] == self.dataset_name:
             return info["path"]
         else:
-            print("warning: DetDataSet: using parent image_reference for: ", info["source"])
+            logging.debug("warning: DetDataSet: using parent image_reference for: ", info["source"])
             super(self.__class__, self).image_reference(image_id)
 
 
@@ -343,8 +349,8 @@ def create_datasets(dataset_dir, config, train_pct=.8):
 
     train_ann, val_ann = split_annotations(dataset_dir, config, train_pct=train_pct)
 
-    print(annotation_stats(train_ann))
-    print(annotation_stats(val_ann))
+    logging.debug(annotation_stats(train_ann))
+    logging.debug(annotation_stats(val_ann))
 
     train_ds = DetDataset(config)
     train_ds.load_by_annotations(dataset_dir, train_ann, config.CLASS_NAMES)
@@ -377,5 +383,5 @@ if __name__ == "__main__":
     dataset_train.prepare()
     dataset_val.prepare()
 
-    print("Training Images: {}\nClasses: {}".format(len(dataset_train.image_ids), dataset_train.class_names))
-    print("Validation Images: {}\nClasses: {}".format(len(dataset_val.image_ids), dataset_val.class_names))
+    logging.debug("Training Images: {}\nClasses: {}".format(len(dataset_train.image_ids), dataset_train.class_names))
+    logging.debug("Validation Images: {}\nClasses: {}".format(len(dataset_val.image_ids), dataset_val.class_names))

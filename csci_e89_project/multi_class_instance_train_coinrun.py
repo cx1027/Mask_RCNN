@@ -14,7 +14,8 @@ from keras import backend as K
 K.clear_session()
 
 import os
-os.environ['KMP_DUPLICATE_LIB_OK']='True'
+
+os.environ['KMP_DUPLICATE_LIB_OK'] = 'True'
 
 # ## Common imports
 
@@ -29,6 +30,11 @@ import numpy as np
 import skimage.draw
 import random
 import collections
+import logging
+
+logging.basicConfig(filename='./log/log_maskRCnn_%s.log' % (datetime.datetime.today())
+                    , format='%(asctime)s [%(levelname)-5.5s] %(message)s'
+                    , level=logging.DEBUG)
 
 # Root directory of the project
 ROOT_DIR = os.path.abspath("../")
@@ -39,9 +45,8 @@ ROOT_IMAGE_DIR = os.path.abspath("images/")
 dataset_path = os.path.join(ROOT_IMAGE_DIR, "level1-debug")
 
 models_dir = os.path.join(ROOT_DIR, "csci_e89_project/models/")
-
-print("base dataset dir:", dataset_path)
-print("base modesl dir:", models_dir)
+logging.debug("base dataset dir:%s" % dataset_path)
+logging.debug("base modesl dir:%s" % models_dir)
 
 # Import Mask RCNN
 sys.path.append(ROOT_DIR)  # To find local version of the library
@@ -59,7 +64,6 @@ COCO_WEIGHTS_PATH = os.path.join(ROOT_DIR, "mask_rcnn_coco.h5")
 # through the command line argument --logs
 DEFAULT_LOGS_DIR = os.path.join(ROOT_DIR, "logs")
 
-
 # In[7]:
 
 
@@ -70,7 +74,7 @@ import matplotlib.patches as patches
 import matplotlib.lines as lines
 from matplotlib.patches import Polygon
 
-#get_ipython().run_line_magic('matplotlib', 'inline')
+# get_ipython().run_line_magic('matplotlib', 'inline')
 
 
 # In[8]:
@@ -79,7 +83,6 @@ from matplotlib.patches import Polygon
 # For Config and Dataset 
 sys.path.append(os.path.join(ROOT_DIR, "csci_e89_project/"))  # To find local version
 import csci_e89_project.det as det
-
 
 # ## Augmentation
 
@@ -103,32 +106,32 @@ ia.seed(1)
 
 # http://imgaug.readthedocs.io/en/latest/source/augmenters.html#sequential
 seq_of_aug = iaa.Sequential([
-    iaa.Crop(percent=(0, 0.1)), # random crops
-    
+    iaa.Crop(percent=(0, 0.1)),  # random crops
+
     # horizontally flip 50% of the images
-    #iaa.Fliplr(0.5), # Does not make sense for signs
+    # iaa.Fliplr(0.5), # Does not make sense for signs
 
     # Gaussian blur to 50% of the images
     # with random sigma between 0 and 0.5.
     iaa.Sometimes(0.4,
-        iaa.GaussianBlur(sigma=(0, 0.5))
-    ),
-    
+                  iaa.GaussianBlur(sigma=(0, 0.5))
+                  ),
+
     # Strengthen or weaken the contrast in each image.
     iaa.ContrastNormalization((0.75, 1.5)),
-    
+
     # Add gaussian noise.
     # For 50% of all images, we sample the noise once per pixel.
     # For the other 50% of all images, we sample the noise per pixel AND
     # channel. This can change the color (not only brightness) of the
     # pixels.
-    iaa.AdditiveGaussianNoise(loc=0, scale=(0.0, 0.05*255), per_channel=0.5),
-    
+    iaa.AdditiveGaussianNoise(loc=0, scale=(0.0, 0.05 * 255), per_channel=0.5),
+
     # Make some images brighter and some darker.
     # In 20% of all cases, we sample the multiplier once per channel,
     # which can end up changing the color of the images.
     iaa.Multiply((0.8, 1.2), per_channel=0.2),
-    
+
     # Apply affine transformations to each image.
     # Scale/zoom them from 90% 5o 110%
     # Translate/move them, rotate them
@@ -139,8 +142,7 @@ seq_of_aug = iaa.Sequential([
         rotate=(-5, 5),
         shear=(-2, 2)
     )
-], random_order=True) # apply augmenters in random order
-
+], random_order=True)  # apply augmenters in random order
 
 # # Train
 
@@ -149,31 +151,29 @@ seq_of_aug = iaa.Sequential([
 # In[10]:
 
 
-print("dataset dir:", dataset_path)
-print("modesl dir:", models_dir)
-
+logging.debug("dataset dir:%s" % dataset_path)
+logging.debug("modesl dir:%s" % models_dir)
 
 # In[11]:
 
 
 # Setup configuration
 
-#config = det.DetConfig('sign', ['sign', 'yield_sign', 'stop_sign', 'oneway_sign', 'donotenter_sign', 'wrongway_sign'])
+# config = det.DetConfig('sign', ['sign', 'yield_sign', 'stop_sign', 'oneway_sign', 'donotenter_sign', 'wrongway_sign'])
 
-config = det.DetConfig('obj', ['obj','player_obj', 'monster1_obj', 'monster2_obj', 'surface_obj', 'box_obj', 'coin_obj'])
+config = det.DetConfig('obj',
+                       ['obj', 'player_obj', 'monster1_obj', 'monster2_obj', 'surface_obj', 'box_obj', 'coin_obj'])
 config.display()
-
 
 # In[12]:
 
 
 # Create the model
-model = modellib.MaskRCNN(mode='training', 
-                          config= config ,
+model = modellib.MaskRCNN(mode='training',
+                          config=config,
                           model_dir=models_dir)
 
 model.keras_model.summary()
-
 
 # In[13]:
 
@@ -186,16 +186,16 @@ COCO_MODEL_PATH = os.path.join(models_dir, "mask_rcnn_coco.h5")
 if not os.path.exists(COCO_MODEL_PATH):
     utils.download_trained_weights(COCO_MODEL_PATH)
 else:
-    print("using existing ", COCO_MODEL_PATH)
-    
+    logging.debug("using existing: %s"% COCO_MODEL_PATH)
+
 # For the coco dataset exclude the last layers because 
 # it requires a matching number of classes
-print("loading...", end='')
+logging.debug("loading...")
 model.load_weights(COCO_MODEL_PATH, by_name=True, exclude=[
     "mrcnn_class_logits", "mrcnn_bbox_fc",
     "mrcnn_bbox", "mrcnn_mask"])
 
-print("loaded.")
+logging.debug("loaded.")
 
 
 # In[ ]:
@@ -203,9 +203,9 @@ print("loaded.")
 
 def train(model, dataset_path, epochs=30):
     """Train the model."""
-    
+
     # Create the train and val dataset.
-    dataset_train, dataset_val = det.create_datasets(dataset_path+'/train', config)
+    dataset_train, dataset_val = det.create_datasets(dataset_path + '/train', config)
 
     # Prepare them
     dataset_train.prepare()
@@ -215,62 +215,61 @@ def train(model, dataset_path, epochs=30):
     # Since we're using a very small dataset, and starting from
     # COCO trained weights, we don't need to train too long. Also,
     # no need to train all layers, just the heads should do it.
-    print("Training network heads")
+    logging.debug("Training network heads")
     history = model.train(dataset_train, dataset_val,
-                learning_rate=config.LEARNING_RATE,
-                epochs=epochs,
-                layers='heads', 
-                augmentation=seq_of_aug
-                )
-    
+                          learning_rate=config.LEARNING_RATE,
+                          epochs=epochs,
+                          layers='heads',
+                          augmentation=seq_of_aug
+                          )
+
     return history
 
 
 # In[1]:
 
-
-history = train(model, dataset_path, 1)
+try:
+    history = train(model, dataset_path, 1)
+except:
+    logging.debug("Unexpected error:{0}:".format(sys.exc_info()[0]))
 
 
 # In[ ]:
 
 
-print(history.history.keys())
-
+logging.debug(history.history.keys())
 
 # In[ ]:
 
 
 import math
 
+
 def plot_history(history):
-    
-    fig = plt.figure(figsize=(16,10))
-       
+    fig = plt.figure(figsize=(16, 10))
+
     n_history_loss = len(history.history)
     n_epochs = len(history.epoch)
     epoch = history.epoch
-    
+
     # The loss is in pairs, one for train, one for val
-    loss_stats = [ k for k in history.history.keys() if 'val_' not in k ]
-    
+    loss_stats = [k for k in history.history.keys() if 'val_' not in k]
+
     n_cols = 4
-    n_rows = math.ceil(len(loss_stats) / n_cols) 
-    
+    n_rows = math.ceil(len(loss_stats) / n_cols)
+
     for i, k in enumerate(loss_stats):
-        val_k = 'val_'+k
-        ax = plt.subplot( n_rows, n_cols, i+1)
+        val_k = 'val_' + k
+        ax = plt.subplot(n_rows, n_cols, i + 1)
         ax.plot(epoch, history.history[k], label=k)
         ax.plot(epoch, history.history[val_k], label=val_k)
         ax.set_xlabel('Epochs')
         ax.set_ylabel('Loss')
-        ax.set_title(str(i)+' - '+k)
+        ax.set_title(str(i) + ' - ' + k)
         plt.legend(shadow=True, fancybox=True)
-    
+
     fig.tight_layout()
     plt.show()
-    
-    
 
 
 # In[14]:
@@ -278,7 +277,6 @@ def plot_history(history):
 
 # Plot training stats for each of the networks.
 plot_history(history)
-
 
 # # Inference
 
@@ -298,9 +296,11 @@ class InferenceConfig(det.DetConfig):
     # one image at a time. Batch size = GPU_COUNT * IMAGES_PER_GPU
     GPU_COUNT = 1
     IMAGES_PER_GPU = 1
-    
-#inf_config = InferenceConfig('sign', ['sign', 'yield_sign', 'stop_sign', 'oneway_sign', 'donotenter_sign', 'wrongway_sign'])
-inf_config = det.DetConfig('obj', ['obj','player_obj', 'monster1_obj', 'monster2_obj', 'surface_obj', 'box_obj', 'coin_obj'])
+
+
+# inf_config = InferenceConfig('sign', ['sign', 'yield_sign', 'stop_sign', 'oneway_sign', 'donotenter_sign', 'wrongway_sign'])
+inf_config = det.DetConfig('obj',
+                           ['obj', 'player_obj', 'monster1_obj', 'monster2_obj', 'surface_obj', 'box_obj', 'coin_obj'])
 
 inf_model = modellib.MaskRCNN(mode="inference",
                               config=inf_config,
@@ -309,17 +309,17 @@ inf_model = modellib.MaskRCNN(mode="inference",
 inf_config.display()
 
 # enabled for testing
-#weights_path = os.path.join(models_dir, "sign20180508T1523_mask_rcnn_sign_0075.h5")
+# weights_path = os.path.join(models_dir, "sign20180508T1523_mask_rcnn_sign_0075.h5")
 
-print("Using weights: ", weights_path)
+logging.debug("Using weights: %s" % weights_path)
 
 inf_model.load_weights(weights_path, by_name=True)
-
 
 # In[17]:
 
 
 import glob
+
 
 def detect_instance(class_names, image_test_dir):
     """
@@ -327,13 +327,13 @@ def detect_instance(class_names, image_test_dir):
     image_filenames: list of images to analyze
     """
 
-    det_filenames = sorted(glob.glob(image_test_dir+'/*'))
+    det_filenames = sorted(glob.glob(image_test_dir + '/*'))
 
     for f in det_filenames:
-        print("Processing image {}".format(f))
+        logging.debug("Processing image {}".format(f))
 
         test_img = plt.imread(f)
-        print(test_img.shape)
+        logging.debug(test_img.shape)
 
         plt.imshow(test_img)
         # visualize.display_images([test_img])
@@ -342,17 +342,17 @@ def detect_instance(class_names, image_test_dir):
         # class_ids,their scores and masks.
         results = inf_model.detect([test_img], verbose=1)[0]
 
-        print("Objects detected: ", len(results['class_ids']))
+        logging.debug("Objects detected: %i" % len(results['class_ids']))
 
         # Visualize results
-        visualize.display_instances(test_img, 
-                                    results['rois'], 
-                                    results['masks'], 
-                                    results['class_ids'], 
-                                    class_names, 
+        visualize.display_instances(test_img,
+                                    results['rois'],
+                                    results['masks'],
+                                    results['class_ids'],
+                                    class_names,
                                     results['scores'])
 
-        print(results['class_ids'])
+        logging.debug(results['class_ids'])
 
 
 # In[18]:
@@ -360,49 +360,47 @@ def detect_instance(class_names, image_test_dir):
 
 import time
 
+
 def detect_instances(class_names, image_test_dir):
     """
     class_names: list of class names of the dataset
     image_filenames: list of images to analyze
     """
-        
-    det_filenames = sorted(glob.glob(image_test_dir+'/*'))
 
-    fig = plt.figure(figsize=(16,10))
+    det_filenames = sorted(glob.glob(image_test_dir + '/*'))
+
+    fig = plt.figure(figsize=(16, 10))
 
     n_cols = 3
-    n_rows = math.ceil(len(det_filenames) / n_cols) 
-    
-    
+    n_rows = math.ceil(len(det_filenames) / n_cols)
+
     for i, f in enumerate(det_filenames):
-        
-        print("Processing image {}".format(f))
-        
-        ax = plt.subplot( n_rows, n_cols, i+1)
+        logging.debug("Processing image {}".format(f))
+
+        ax = plt.subplot(n_rows, n_cols, i + 1)
 
         test_img = plt.imread(f)
 
         start_time = time.time()
-        
+
         # Included in the results from detect are the found:
         # class_ids,their scores and masks.
         results = inf_model.detect([test_img], verbose=1)[0]
-        
+
         elapsed_time = time.time() - start_time
 
-        print("Elapsed time: {:.4f}, Objects detected: {}".format( elapsed_time, len(results['class_ids'])))
+        logging.debug("Elapsed time: {:.4f}, Objects detected: {}".format(elapsed_time, len(results['class_ids'])))
 
         # Visualize results
-        visualize.display_instances(test_img, 
-                                    results['rois'], 
-                                    results['masks'], 
-                                    results['class_ids'], 
-                                    class_names, 
+        visualize.display_instances(test_img,
+                                    results['rois'],
+                                    results['masks'],
+                                    results['class_ids'],
+                                    class_names,
                                     results['scores'],
                                     ax=ax)
 
-        print(results['class_ids'])
-        
+        logging.debug("class_ids:%s" %results['class_ids'])
 
 
 # In[19]:
@@ -415,11 +413,7 @@ if debugging:
 else:
     r = detect_instances(inf_config.ALL_CLASS_NAMES, image_test_dir)
 
-
 # In[ ]:
-
-
-
 
 
 # In[ ]:
