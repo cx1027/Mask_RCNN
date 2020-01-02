@@ -251,6 +251,8 @@ class DetDataset(utils.Dataset):
             rr, cc = skimage.draw.rectangle((p['x'], p['y']), (p['x'] + p['width'], p['y'] + p['height']))
         elif p['name'] == 'ellipse':
             rr, cc = skimage.draw.ellipse(p['cx'], p['cy'], p['rx'], p['ry'])
+        elif p['name'] == 'circle':
+            rr, cc = skimage.draw.circle(p['cx'], p['cy'], p['r'])
         else:
             logging.debug('##ERROR: shape is not polygon,rect or ellipse.')
         return rr, cc

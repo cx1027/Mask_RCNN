@@ -228,10 +228,10 @@ def train(model, dataset_path, epochs=30):
 
 # In[1]:
 
-try:
-    history = train(model, dataset_path, 30)
-except:
-    logging.debug("Unexpected error:{0}:".format(sys.exc_info()[0]))
+# try:
+history = train(model, dataset_path, 30)
+# except:
+#     logging.debug("Unexpected error:{0}:".format(sys.exc_info()[0]))
 
 
 # In[ ]:
