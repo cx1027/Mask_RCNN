@@ -42,7 +42,7 @@ ROOT_IMAGE_DIR = os.path.abspath("images/")
 
 # Path to the dataset (note this is a shared images directory)
 # dataset_path = os.path.join(ROOT_IMAGE_DIR, "level1")
-dataset_path = os.path.join(ROOT_IMAGE_DIR, "level1-debug")
+dataset_path = os.path.join(ROOT_IMAGE_DIR, "20200119")
 
 models_dir = os.path.join(ROOT_DIR, "csci_e89_project/models/")
 logging.debug("base dataset dir:%s" % dataset_path)
@@ -58,7 +58,7 @@ from mrcnn.visualize import display_images
 from mrcnn.model import log
 
 # Path to trained weights file
-COCO_WEIGHTS_PATH = os.path.join(ROOT_DIR, "mask_rcnn_coco.h5")
+COCO_WEIGHTS_PATH = os.path.join(ROOT_DIR, "mask_rcnn_obj_0015.h5")
 
 # Directory to save logs and model checkpoints, if not provided
 # through the command line argument --logs
@@ -162,7 +162,7 @@ logging.debug("modesl dir:%s" % models_dir)
 # config = det.DetConfig('sign', ['sign', 'yield_sign', 'stop_sign', 'oneway_sign', 'donotenter_sign', 'wrongway_sign'])
 
 config = det.DetConfig('obj',
-                       ['obj', 'player_obj', 'monster1_obj', 'monster2_obj', 'surface_obj', 'box_obj', 'coin_obj'])
+                       ['obj', 'player_obj', 'monster_obj', 'surface_obj', 'box_obj', 'coin_obj'])
 config.display()
 
 # In[12]:
@@ -300,7 +300,7 @@ class InferenceConfig(det.DetConfig):
 
 # inf_config = InferenceConfig('sign', ['sign', 'yield_sign', 'stop_sign', 'oneway_sign', 'donotenter_sign', 'wrongway_sign'])
 inf_config = det.DetConfig('obj',
-                           ['obj', 'player_obj', 'monster1_obj', 'monster2_obj', 'surface_obj', 'box_obj', 'coin_obj'])
+                           ['obj', 'player_obj', 'monster1_obj', 'surface_obj', 'box_obj', 'coin_obj'])
 
 inf_model = modellib.MaskRCNN(mode="inference",
                               config=inf_config,
